@@ -1,7 +1,5 @@
-=== Garanție SGR pentru WooCommerce ===
-Contributors: rwky
-Donate link: https://www.paypal.me/eduardvd
-Tags: SGR, WooCommerce, garantie, returnare, reciclare
+**Garanție SGR pentru WooCommerce**
+
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4  
@@ -39,25 +37,20 @@ Extensie WooCommerce pentru sistemul garanție SGR. Garanția SGR (Sistem de Gar
 
 == Utilizare ==
 
-1. **Activarea SGR pentru un produs**
+**Activarea SGR pentru un produs**
     - Accesează **Produse → Editează un produs**.
     - În secțiunea **Date produs**, navighează la tab-ul **SGR**.
     - Bifează opțiunea **"Aplică taxă SGR pentru acest produs"**.
     - Salvează produsul.
 
-2. **Configurarea taxei SGR**
-    - Accesează **WooCommerce → Setări → Produse → SGR**.
-    - Setează valoarea taxei SGR (ex: 0.50 RON).
-    - Personalizează mesajul afișat la produse.
-    - Salvează modificările.
 
 == Întrebări frecvente ==
 
 = Ce se întâmplă dacă nu activez SGR pentru un produs? =  
 Dacă nu activezi opțiunea, taxa SGR nu va fi adăugată la acel produs.
 
-= Pot modifica valoarea taxei SGR? =  
-Da, poți seta orice valoare în **WooCommerce → Setări → Produse → SGR**.
+= Taxa SGR are TVA? =  
+Nu, este setată în mod explicit ca și nepurtătoare de TVA.
 
 = Este compatibil cu HPOS (High-Performance Order Storage)? =  
 Da, pluginul este compatibil cu noul sistem WooCommerce HPOS.
