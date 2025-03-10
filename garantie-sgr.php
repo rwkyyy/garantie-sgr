@@ -241,7 +241,7 @@ if ( ! class_exists( 'Garantie_SGR' ) ) {
 			}
 
 			if ( $fee_total > 0 ) {
-				$cart->add_fee( esc_html__( 'SGR', 'garantie-sgr' ), $fee_total );
+				$cart->add_fee( esc_html__( 'SGR', 'garantie-sgr' ), $fee_total, false);
 			}
 		}
 	}
