@@ -13,13 +13,15 @@ Extensie WooCommerce pentru sistemul garanție SGR.
 
 == Descriere ==
 
-Extensie WooCommerce pentru sistemul garanție SGR. Garanția SGR (Sistem de Garanție-Returnare) este o sumă de bani plătită de consumatori la achiziția unor produse cu ambalaje reutilizabile sau reciclabile (precum sticle, PET-uri sau doze de aluminiu). Aceste sume pot fi recuperată la returnarea acestora în punctele de colectare.
+Extensie WooCommerce pentru sistemul garanție SGR (ReturoSGR). Garanția SGR (Sistem de Garanție-Returnare) este o sumă de bani plătită de consumatorii finali la achiziția unor produse cu ambalaje reutilizabile sau reciclabile (precum sticle, PET-uri sau doze de aluminiu). Aceste sume pot fi recuperată la returnarea acestora în punctele de colectare.
 
 **Caracteristici principale:**
-- ✅ Adaugă automat taxa SGR la produsele eligibile.
+- ✅ Adaugă automat taxa SGR la produsele bifate.
 - ✅ Permite activarea/dezactivarea taxei pentru fiecare produs.
+- ✅ Poți vedea centralizat toate produsele care au SGR activ.
 - ✅ Afișează un mesaj informativ despre SGR pe pagina produsului.
 - ✅ Include taxa SGR în coșul de cumpărături și în totalul comenzii.
+- ✅ Compatibil cu toate softurile de facturare.
 - ✅ Compatibil cu sistemul HPOS (High-Performance Order Storage).
 
 == Instalare ==
@@ -46,18 +48,20 @@ Extensie WooCommerce pentru sistemul garanție SGR. Garanția SGR (Sistem de Gar
 
 == Întrebări frecvente ==
 
-= Ce se întâmplă dacă nu activez SGR pentru un produs? =  
+= Ce se întâmplă dacă nu activez SGR pentru un produs? =
 Dacă nu activezi opțiunea, taxa SGR nu va fi adăugată la acel produs.
 
-= Taxa SGR are TVA? =  
+= Taxa SGR are TVA? =
 Nu, este setată în mod explicit ca și nepurtătoare de TVA.
 
-= Este compatibil cu HPOS (High-Performance Order Storage)? =  
+= Este compatibil cu HPOS (High-Performance Order Storage)? =
 Da, pluginul este compatibil cu noul sistem WooCommerce HPOS.
 
-= Taxa SGR apare pe factură? =  
-Da, taxa SGR este adăugată automat în totalul comenzii.
+= Taxa SGR apare pe factură? =
+Da, taxa SGR este adăugată automat în totalul comenzii și notată separat ca și poziție în comandă, iar în teorie ar trebui să apară și pe factură.
 
+= Pot vedea toate produsele care au taxa SGR activă? =
+Da, în Panou WordPress → Produse → SGR poți vedea centralizat toate produsele
 == Schimbări ==
 
 = 1.0 =
