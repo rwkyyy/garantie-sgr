@@ -3,7 +3,7 @@
  * Plugin Name: Garanție SGR pentru WooCommerce
  * Plugin URL: https://uprise.ro
  * Description: Extensie WooCommerce pentru sistemul garanție-returnare SGR.
- * Version: 2.0
+ * Version: 2.0.1
  * Author: Eduard V. Doloc
  * Author URI: https://uprise.ro
  * Requires at least: 6.0
@@ -11,7 +11,7 @@
  * Requires PHP: 7.4
  * WC requires at least: 7.9
  * WC tested up to: 10.0
- * Stable tag: 2.0
+ * Stable tag: 2.0.1
  * Requires Plugins: woocommerce
  * License: GPLv2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -21,7 +21,7 @@
 defined( 'ABSPATH' ) || exit;
 
 if ( ! defined( 'GARANTIE_SGR_VERSION' ) ) {
-	define( 'GARANTIE_SGR_VERSION', '2.0' );
+	define( 'GARANTIE_SGR_VERSION', '2.0.1' );
 }
 
 // HPOS - not needed, but apparently it fails checks!
@@ -106,6 +106,10 @@ function garantie_svg_product_create() {
 	if ( ! class_exists( 'WC_Product_Simple' ) ) {
 		return false;
 	}
+	// safeguard for older wc
+	if ( ! function_exists( 'wc_get_product_id_by_sku' ) ) {
+		return false;
+	}
 
 	$sgr_sku    = 'TAXA-SGR';
 	$product_id = wc_get_product_id_by_sku( $sgr_sku );
@@ -115,7 +119,6 @@ function garantie_svg_product_create() {
 
 		return (int) $product_id;
 	}
-
 
 	$product = new WC_Product_Simple();
 	$product->set_name( __( 'Taxă SGR', 'garantie-sgr' ) );
@@ -127,7 +130,6 @@ function garantie_svg_product_create() {
 	$product->set_catalog_visibility( 'hidden' );
 	$product->set_status( 'publish' );
 	$product->set_virtual( true );
-
 
 	$product_id = $product->save();
 	if ( $product_id && ! is_wp_error( $product_id ) ) {
@@ -150,17 +152,30 @@ function garantie_svg_product_create() {
 	return false;
 }
 
-// Activation: create if missing.
+// Activation: defer creation until Woo is initialized (next load).
 register_activation_hook( __FILE__, function () {
-	garantie_svg_product_create();
+	update_option( 'garantie_sgr_pending_setup', 1 );
 } );
 
 // Update path / repairs when users update without re-activating.
-add_action( 'init', function () {
+// Run only after WooCommerce is fully initialized.
+add_action( 'woocommerce_init', function () {
+	if ( ! class_exists( 'WC_Product_Simple' ) || ! function_exists( 'wc_get_product_id_by_sku' ) ) {
+		return;
+	}
+
 	$stored_version = get_option( 'garantie_sgr_version' );
 	$stored_id      = (int) get_option( 'garantie_sgr_product_id' );
+	$pending_setup  = (int) get_option( 'garantie_sgr_pending_setup', 0 );
 
 	$needs = false;
+
+	// If activation set a pending flag, run now.
+	if ( $pending_setup ) {
+		$needs = true;
+	}
+
+	// On version change or missing product ID, run now.
 	if ( $stored_version !== GARANTIE_SGR_VERSION ) {
 		$needs = true;
 	}
@@ -171,8 +186,9 @@ add_action( 'init', function () {
 	if ( $needs ) {
 		garantie_svg_product_create();
 		update_option( 'garantie_sgr_version', GARANTIE_SGR_VERSION );
+		delete_option( 'garantie_sgr_pending_setup' );
 	}
-}, 5 );
+}, 20 );
 
 //filters for visibility of the product
 add_filter( 'woocommerce_product_is_visible', function ( $visible, $product_id ) {
