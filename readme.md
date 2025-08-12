@@ -1,4 +1,4 @@
-=== Garanție SGR pentru WooCommerce ===
+=== Garanție SGR pentru WooCommerce === 
 Contributors: rwky,robertutzu
 Donate link: https://www.paypal.me/eduardvd
 Tags: SGR, WooCommerce, garantie, returnare, reciclare
@@ -31,23 +31,23 @@ Extensie WooCommerce pentru sistemul garanție-returnare SGR (ReturoSGR). Garan�
 == Instalare ==
 
 1. **Instalare automată**
-   - Accesează **Panoul de control WordPress** → **Module** → **Adaugă modul**.
-   - Caută **"Garanție SGR pentru WooCommerce"**.
-   - Apasă pe **Instalează acum** și apoi **Activează**.
+    - Accesează **Panoul de control WordPress** → **Module** → **Adaugă modul**.
+    - Caută **"Garanție SGR pentru WooCommerce"**.
+    - Apasă pe **Instalează acum** și apoi **Activează**.
 
 2. **Instalare manuală**
-   - Descarcă arhiva `.zip` a pluginului.
-   - Accesează **Panoul de control WordPress** → **Module** → **Adaugă modul** → **Încarcă modul**.
-   - Selectează fișierul `.zip` descărcat și apasă **Instalează acum**.
-   - Activează pluginul din secțiunea **Module instalate**.
+    - Descarcă arhiva `.zip` a pluginului.
+    - Accesează **Panoul de control WordPress** → **Module** → **Adaugă modul** → **Încarcă modul**.
+    - Selectează fișierul `.zip` descărcat și apasă **Instalează acum**.
+    - Activează pluginul din secțiunea **Module instalate**.
 
 == Utilizare ==
 
 1. **Activarea SGR pentru un produs**
-   - Accesează **Produse → Editează un produs**.
-   - În secțiunea **Date produs**, navighează la tab-ul **SGR**.
-   - Bifează opțiunea **"Aplică taxă SGR pentru acest produs"**.
-   - Salvează produsul.
+    - Accesează **Produse → Editează un produs**.
+    - În secțiunea **Date produs**, navighează la tab-ul **SGR**.
+    - Bifează opțiunea **"Aplică taxă SGR pentru acest produs"**.
+    - Salvează produsul.
 
 
 == Întrebări frecvente ==

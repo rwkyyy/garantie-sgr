@@ -3,7 +3,7 @@
  * Plugin Name: Garanție SGR pentru WooCommerce
  * Plugin URL: https://uprise.ro
  * Description: Extensie WooCommerce pentru sistemul garanție-returnare SGR.
- * Version: 2.0.1
+ * Version: 2.0.5
  * Author: Eduard V. Doloc
  * Author URI: https://uprise.ro
  * Requires at least: 6.0
@@ -11,17 +11,52 @@
  * Requires PHP: 7.4
  * WC requires at least: 7.9
  * WC tested up to: 10.0
- * Stable tag: 2.0.1
+ * Stable tag: 2.0.5
  * Requires Plugins: woocommerce
  * License: GPLv2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  */
 
+//@todo too messy, needs tidy.
 
 defined( 'ABSPATH' ) || exit;
 
 if ( ! defined( 'GARANTIE_SGR_VERSION' ) ) {
-	define( 'GARANTIE_SGR_VERSION', '2.0.1' );
+	define( 'GARANTIE_SGR_VERSION', '2.0.5' );
+}
+
+
+function garantie_sgr_acquire_creation_lock() {
+	return add_option( 'garantie_sgr_creating', time(), '', 'no' );
+}
+
+function garantie_sgr_release_creation_lock() {
+	delete_option( 'garantie_sgr_creating' );
+}
+
+function garantie_sgr_needs_ensure() {
+	$stored_version = get_option( 'garantie_sgr_version' );
+	$stored_id      = (int) get_option( 'garantie_sgr_product_id' );
+	$pending_setup  = (int) get_option( 'garantie_sgr_pending_setup', 0 );
+
+	if ( $pending_setup ) {
+		return true;
+	}
+
+	if ( $stored_version !== GARANTIE_SGR_VERSION ) {
+		return true;
+	}
+
+	if ( ! $stored_id ) {
+		return true;
+	}
+
+	$post = get_post( $stored_id );
+	if ( ! $post || 'trash' === $post->post_status ) {
+		return true;
+	}
+
+	return false;
 }
 
 // HPOS - not needed, but apparently it fails checks!
@@ -101,94 +136,140 @@ function sgr_image_check( $basename ) {
 	return (int) $attach_id;
 }
 
-// create the product if it's missing
-function garantie_svg_product_create() {
-	if ( ! class_exists( 'WC_Product_Simple' ) ) {
-		return false;
-	}
-	// safeguard for older wc
-	if ( ! function_exists( 'wc_get_product_id_by_sku' ) ) {
+
+//check existance in any endpoint
+function garantie_sgr_admin_ensure() {
+	if ( ! garantie_sgr_acquire_creation_lock() ) {
 		return false;
 	}
 
 	$sgr_sku    = 'TAXA-SGR';
-	$product_id = wc_get_product_id_by_sku( $sgr_sku );
+	$slug       = 'taxa-sgr';
+	$product_id = 0;
+
+
+	$stored_id = (int) get_option( 'garantie_sgr_product_id' );
+	if ( $stored_id && get_post( $stored_id ) && 'trash' !== get_post_status( $stored_id ) ) {
+		$product_id = $stored_id;
+	}
+
+
+	if ( ! $product_id && function_exists( 'wc_get_product_id_by_sku' ) ) {
+		$maybe = wc_get_product_id_by_sku( $sgr_sku );
+		if ( $maybe ) {
+			$product_id = (int) $maybe;
+		}
+	}
+
+
+	if ( ! $product_id ) {
+		$page = get_page_by_path( $slug, OBJECT, 'product' );
+		if ( $page && ! is_wp_error( $page ) ) {
+			$product_id = (int) $page->ID;
+			// Ensure SKU is set for future lookups.
+			if ( '' === get_post_meta( $product_id, '_sku', true ) ) {
+				update_post_meta( $product_id, '_sku', $sgr_sku );
+			}
+		}
+	}
+
+
+	if ( ! $product_id ) {
+		$product_id = garantie_sgr_product_create();
+	}
+
 
 	if ( $product_id ) {
 		update_option( 'garantie_sgr_product_id', (int) $product_id );
-
-		return (int) $product_id;
-	}
-
-	$product = new WC_Product_Simple();
-	$product->set_name( __( 'Taxă SGR', 'garantie-sgr' ) );
-	$product->set_sku( $sgr_sku );
-	$product->set_regular_price( '0.50' );
-	$product->set_price( '0.50' );
-	$product->set_tax_status( 'none' );
-	$product->set_description( __( 'Taxă garanție SGR', 'garantie-sgr' ) );
-	$product->set_catalog_visibility( 'hidden' );
-	$product->set_status( 'publish' );
-	$product->set_virtual( true );
-
-	$product_id = $product->save();
-	if ( $product_id && ! is_wp_error( $product_id ) ) {
-		// Backdate to Unix epoch start.
-		wp_update_post( array(
-			'ID'            => $product_id,
-			'post_date'     => '1970-01-01 00:00:00',
-			'post_date_gmt' => '1970-01-01 00:00:00',
-		) );
-		update_option( 'garantie_sgr_product_id', (int) $product_id );
-
-		$attach_id = sgr_image_check( 'produs-sgr.gif' );
-		if ( $attach_id ) {
-			set_post_thumbnail( $product_id, $attach_id );
-		}
-
-		return (int) $product_id;
-	}
-
-	return false;
-}
-
-// Activation: defer creation until Woo is initialized (next load).
-register_activation_hook( __FILE__, function () {
-	update_option( 'garantie_sgr_pending_setup', 1 );
-} );
-
-// Update path / repairs when users update without re-activating.
-// Run only after WooCommerce is fully initialized.
-add_action( 'woocommerce_init', function () {
-	if ( ! class_exists( 'WC_Product_Simple' ) || ! function_exists( 'wc_get_product_id_by_sku' ) ) {
-		return;
-	}
-
-	$stored_version = get_option( 'garantie_sgr_version' );
-	$stored_id      = (int) get_option( 'garantie_sgr_product_id' );
-	$pending_setup  = (int) get_option( 'garantie_sgr_pending_setup', 0 );
-
-	$needs = false;
-
-	// If activation set a pending flag, run now.
-	if ( $pending_setup ) {
-		$needs = true;
-	}
-
-	// On version change or missing product ID, run now.
-	if ( $stored_version !== GARANTIE_SGR_VERSION ) {
-		$needs = true;
-	}
-	if ( ! $stored_id || ! get_post( $stored_id ) ) {
-		$needs = true;
-	}
-
-	if ( $needs ) {
-		garantie_svg_product_create();
 		update_option( 'garantie_sgr_version', GARANTIE_SGR_VERSION );
 		delete_option( 'garantie_sgr_pending_setup' );
 	}
+
+	garantie_sgr_release_creation_lock();
+
+	return $product_id ? (int) $product_id : false;
+}
+
+function garantie_sgr_product_create() {
+	if ( ! function_exists( 'wp_insert_post' ) ) {
+		return false;
+	}
+
+	$sgr_sku = 'TAXA-SGR';
+	$slug    = 'taxa-sgr';
+
+	$postarr = array(
+		'post_title'  => __( 'Taxă SGR', 'garantie-sgr' ),
+		'post_type'   => 'product',
+		'post_status' => 'publish',
+		'post_name'   => $slug,
+		'tax_input'   => array(
+			'product_type' => array( 'simple' ),
+		),
+	);
+
+	$product_id = wp_insert_post( $postarr, true );
+	if ( is_wp_error( $product_id ) || ! $product_id ) {
+		return false;
+	}
+
+	update_post_meta( $product_id, '_sku', $sgr_sku );
+	update_post_meta( $product_id, '_price', '0.50' );
+	update_post_meta( $product_id, '_regular_price', '0.50' );
+	update_post_meta( $product_id, '_tax_status', 'none' );
+	update_post_meta( $product_id, '_virtual', 'yes' );
+	update_post_meta( $product_id, '_manage_stock', 'no' );
+
+	if ( taxonomy_exists( 'product_visibility' ) ) {
+		wp_set_object_terms( $product_id, array(
+			'exclude-from-catalog',
+			'exclude-from-search'
+		), 'product_visibility', true );
+	}
+
+	wp_update_post( array(
+		'ID'            => $product_id,
+		'post_date'     => '1970-01-01 00:00:00',
+		'post_date_gmt' => '1970-01-01 00:00:00',
+	) );
+
+	if ( function_exists( 'set_post_thumbnail' ) ) {
+		$attach_id = function_exists( 'sgr_image_check' ) ? sgr_image_check( 'produs-sgr.gif' ) : false;
+		if ( $attach_id ) {
+			set_post_thumbnail( $product_id, (int) $attach_id );
+		}
+	}
+
+	return (int) $product_id;
+}
+
+// Activation: mark pending and schedule a single setup event shortly after activation.
+register_activation_hook( __FILE__, function () {
+	update_option( 'garantie_sgr_pending_setup', 1 );
+	if ( ! wp_next_scheduled( 'garantie_sgr_setup_event' ) ) {
+		wp_schedule_single_event( time() + 30, 'garantie_sgr_setup_event' );
+	}
+} );
+
+// Cron handler: ensure setup when the single event fires.
+add_action( 'garantie_sgr_setup_event', function () {
+	garantie_sgr_admin_ensure();
+} );
+
+// Admin ensure: only in dashboard & proper capability to avoid public races.
+add_action( 'admin_init', function () {
+	if ( ! is_admin() ) {
+		return;
+	}
+	if ( ! current_user_can( 'manage_woocommerce' ) ) {
+		return;
+	}
+	if ( ! garantie_sgr_needs_ensure() ) {
+		return;
+	}
+	garantie_sgr_admin_ensure();
 }, 20 );
+
 
 //filters for visibility of the product
 add_filter( 'woocommerce_product_is_visible', function ( $visible, $product_id ) {
